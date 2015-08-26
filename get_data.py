@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import time
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -32,12 +33,21 @@ def main():
 
 	i = 1
 	while True:
-		r = requests.get(endpoint + str(i))
+		read_more = True
+		wait = 1
+		while read_more:
+			r = requests.get(endpoint + str(i))
+
+			html = r.content
+			soup = BeautifulSoup(html)
+			read_more = soup.find(class_='read-more') != None
+			if read_more:
+				time.sleep(wait)
+				wait +=1
 		if r.status_code != 200:
-			break
-		html = r.content
-		soup  = BeautifulSoup(html)
+				break
 		articles = soup.find_all('article')
+		
 		for art in articles:
 			dailies.append(Daily(art))
 		print i
@@ -57,7 +67,7 @@ def main():
 
 	sums = list(df.sum(axis=0))
 
-	df.to_csv('mattermark.csv', index=True, header=True, sep=',')
+	df.to_csv('mattermark_test.csv', index=True, header=True, sep=',')
 
 	counts = sorted(zip(vocab,sums),key=lambda x: x[1])
 
